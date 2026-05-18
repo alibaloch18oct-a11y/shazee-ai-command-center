@@ -8,8 +8,11 @@ import {
   Bot,
   Brain,
   Code2,
+  ExternalLink,
   Globe2,
+  Layers3,
   Loader2,
+  Mail,
   Mic,
   MicOff,
   MonitorSmartphone,
@@ -18,6 +21,7 @@ import {
   ShieldCheck,
   Sparkles,
   Terminal,
+  UserRound,
   Volume2,
   VolumeX,
   Zap,
@@ -181,34 +185,68 @@ function AIGlobe({ active }: { active: boolean }) {
   );
 }
 
-const tools = [
+const featureCards = [
   {
     icon: Brain,
     title: "AI Brain",
-    text: "Connected with real AI through secure server API route.",
+    text: "Connected with real AI through a secure Next.js server route using Groq API.",
   },
   {
     icon: Volume2,
     title: "Voice Output",
-    text: "Jarvis can speak AI replies aloud using browser speech.",
+    text: "Jarvis can speak AI replies aloud using browser speech synthesis.",
+  },
+  {
+    icon: Mic,
+    title: "Voice Input",
+    text: "Users can speak commands directly through the mic button.",
   },
   {
     icon: MonitorSmartphone,
     title: "Cross Platform",
-    text: "Runs on laptop, mobile, tablet, and can be installed as a PWA.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Portfolio Mode",
-    text: "Shows your skills, projects, and futuristic AI interface in one app.",
+    text: "Works on laptop, mobile, tablet, and can be installed as a PWA.",
   },
 ];
 
+const skills = [
+  "Next.js",
+  "React",
+  "Tailwind CSS",
+  "TypeScript",
+  "Groq API",
+  "AI Chat Integration",
+  "Voice Input",
+  "Voice Output",
+  "Three.js",
+  "React Three Fiber",
+  "Framer Motion",
+  "Responsive UI",
+  "PWA Setup",
+  "GitHub",
+  "Vercel Deployment",
+];
+
 const projects = [
-  "Jarvis Desktop Assistant",
-  "School Result Management App",
-  "AI Resume Email Generator",
-  "Hologram Interface Concept",
+  {
+    title: "Shazee AI Command Center",
+    tech: "Next.js, Groq API, Tailwind, Three.js",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, and responsive web design.",
+  },
+  {
+    title: "Jarvis Desktop Assistant",
+    tech: "Python, AI API, Voice Features",
+    text: "A local desktop AI assistant concept inspired by Jarvis, built with voice interaction and a futuristic interface.",
+  },
+  {
+    title: "School Result Management App",
+    tech: "AppSheet, Database, Automation",
+    text: "A school management solution for student records, result calculations, grades, and admin workflows.",
+  },
+  {
+    title: "AI Resume & Email Assistant",
+    tech: "AI Prompting, Resume Writing, Automation",
+    text: "A practical AI tool concept for generating professional job emails, cover letters, and resume improvements.",
+  },
 ];
 
 export default function Home() {
@@ -546,9 +584,9 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
-                A professional AI command center designed to showcase your
-                projects, voice assistant concept, futuristic UI skills, and AI
-                integration in one online app.
+                A professional AI command center designed to showcase AI chat,
+                voice input, voice output, 3D visuals, and modern web
+                development skills in one live portfolio project.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -562,10 +600,13 @@ export default function Home() {
                   Activate Demo
                 </button>
 
-                <button className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10">
-                  <Code2 className="mr-2 inline h-5 w-5" />
-                  Portfolio Mode
-                </button>
+                <a
+                  href="mailto:alibaloch18oct@gmail.com"
+                  className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10"
+                >
+                  <Mail className="mr-2 inline h-5 w-5" />
+                  Contact Me
+                </a>
               </div>
             </div>
 
@@ -586,7 +627,7 @@ export default function Home() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {tools.map((tool) => {
+              {featureCards.map((tool) => {
                 const Icon = tool.icon;
 
                 return (
@@ -708,31 +749,112 @@ export default function Home() {
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Tip: Click mic to speak. Click speaker icon to turn Jarvis voice
-                on/off. Voice works best in Chrome or Edge.
+                Tip: Ask “Who built you?” or “What can this app do?”
               </p>
-            </div>
-
-            <div className="rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-5 backdrop-blur-xl">
-              <div className="mb-4 flex items-center gap-3">
-                <Globe2 className="text-cyan-300" />
-                <h3 className="text-xl font-bold">Project Showcase</h3>
-              </div>
-
-              <div className="space-y-3">
-                {projects.map((project) => (
-                  <div
-                    key={project}
-                    className="flex items-center justify-between rounded-2xl border border-cyan-400/10 bg-black/30 px-4 py-3"
-                  >
-                    <span className="text-sm text-slate-200">{project}</span>
-                    <Zap className="h-4 w-4 text-cyan-300" />
-                  </div>
-                ))}
-              </div>
             </div>
           </motion.div>
         </div>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-6 backdrop-blur-xl lg:col-span-1">
+            <div className="mb-4 flex items-center gap-3">
+              <UserRound className="text-cyan-300" />
+              <h3 className="text-2xl font-bold">About Shazee</h3>
+            </div>
+            <p className="text-sm leading-7 text-slate-300">
+              Shazee is building modern AI-powered applications with futuristic
+              interfaces, voice interaction, API integration, and responsive web
+              design. This project demonstrates practical AI app development
+              from frontend UI to backend AI connection and live deployment.
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-6 backdrop-blur-xl lg:col-span-2">
+            <div className="mb-4 flex items-center gap-3">
+              <Layers3 className="text-cyan-300" />
+              <h3 className="text-2xl font-bold">Skills</h3>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-6 backdrop-blur-xl">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Globe2 className="text-cyan-300" />
+              <h3 className="text-2xl font-bold">Featured Projects</h3>
+            </div>
+            <span className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100 md:inline">
+              Portfolio Showcase
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {projects.map((project) => (
+              <div
+                key={project.title}
+                className="rounded-3xl border border-cyan-400/15 bg-black/30 p-5 transition hover:border-cyan-300/40 hover:bg-white/[0.06]"
+              >
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="text-lg font-bold text-cyan-50">
+                      {project.title}
+                    </h4>
+                    <p className="mt-1 text-xs text-cyan-200/60">
+                      {project.tech}
+                    </p>
+                  </div>
+                  <Zap className="h-5 w-5 shrink-0 text-cyan-300" />
+                </div>
+                <p className="text-sm leading-7 text-slate-300">
+                  {project.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="my-8 rounded-[2rem] border border-cyan-400/20 bg-gradient-to-r from-cyan-400/10 via-blue-400/10 to-white/5 p-6 backdrop-blur-xl">
+          <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-300">
+                This app is live, AI-connected, voice-enabled, and deployed as a
+                portfolio-ready project.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="mailto:alibaloch18oct@gmail.com"
+                className="rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-400/25 transition hover:scale-[1.02]"
+              >
+                <Mail className="mr-2 inline h-5 w-5" />
+                Email
+              </a>
+
+              <a
+                href="https://github.com/alibaloch18oct-a11y/shazee-ai-command-center"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10"
+              >
+                <ExternalLink className="mr-2 inline h-5 w-5" />
+                GitHub
+              </a>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   );
