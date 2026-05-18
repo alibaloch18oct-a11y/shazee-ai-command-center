@@ -8,6 +8,7 @@ import {
   Bot,
   Brain,
   ExternalLink,
+  FileText,
   Globe2,
   Layers3,
   Lightbulb,
@@ -17,6 +18,7 @@ import {
   MicOff,
   MonitorSmartphone,
   Rocket,
+  Save,
   Send,
   Sparkles,
   Terminal,
@@ -25,6 +27,7 @@ import {
   VolumeX,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
 import * as THREE from "three";
 
 type Message = {
@@ -61,6 +64,17 @@ type WindowWithSpeech = Window & {
   SpeechRecognition?: new () => SpeechRecognitionType;
   webkitSpeechRecognition?: new () => SpeechRecognitionType;
 };
+
+const CHAT_STORAGE_KEY = "shazee-ai-chat-history";
+const PROJECT_IDEA_STORAGE_KEY = "shazee-ai-project-idea";
+const PROJECT_ANALYSIS_STORAGE_KEY = "shazee-ai-project-analysis";
+
+const initialMessages: Message[] = [
+  {
+    role: "ai",
+    text: "Welcome Shazee. I am your AI Command Center. I can remember this chat session, answer with voice, and help showcase your portfolio.",
+  },
+];
 
 function JarvisCore({ speaking }: { speaking: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -196,9 +210,9 @@ const featureCards = [
     text: "Jarvis can speak AI replies aloud using browser speech synthesis.",
   },
   {
-    icon: Mic,
-    title: "Voice Input",
-    text: "Users can speak commands directly through the mic button.",
+    icon: Save,
+    title: "Saved Chat",
+    text: "Chat history and project analysis are saved in the browser after refresh.",
   },
   {
     icon: Lightbulb,
@@ -216,6 +230,7 @@ const skills = [
   "AI Chat Integration",
   "Voice Input",
   "Voice Output",
+  "Saved Chat",
   "Three.js",
   "React Three Fiber",
   "Framer Motion",
@@ -229,7 +244,12 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, session memory, project analyzer, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, saved chat history, project analyzer, and responsive web design.",
+  },
+  {
+    title: "AI Resume Reviewer",
+    tech: "Next.js, Groq API, Career AI Tool",
+    text: "A separate AI-powered resume reviewer that scores resumes, suggests ATS keywords, improves profile summaries, and gives job application advice.",
   },
   {
     title: "Jarvis Desktop Assistant",
@@ -240,18 +260,6 @@ const projects = [
     title: "School Result Management App",
     tech: "AppSheet, Database, Automation",
     text: "A school management solution for student records, result calculations, grades, and admin workflows.",
-  },
-  {
-    title: "AI Resume & Email Assistant",
-    tech: "AI Prompting, Resume Writing, Automation",
-    text: "A practical AI tool concept for generating professional job emails, cover letters, and resume improvements.",
-  },
-];
-
-const initialMessages: Message[] = [
-  {
-    role: "ai",
-    text: "Welcome Shazee. I am your AI Command Center. I can remember this chat session, answer with voice, and help showcase your portfolio.",
   },
 ];
 
@@ -265,11 +273,11 @@ export default function Home() {
   const [projectIdea, setProjectIdea] = useState("");
   const [projectAnalysis, setProjectAnalysis] = useState("");
   const [analyzerLoading, setAnalyzerLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [loadedSavedData, setLoadedSavedData] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
-
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   const systemStatus = useMemo(
     () => [
@@ -278,11 +286,49 @@ export default function Home() {
         label: "Voice",
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
-      { label: "Memory", value: messages.length > 1 ? "Active" : "Ready" },
+      { label: "Saved", value: messages.length > 1 ? "Active" : "Ready" },
       { label: "Analyzer", value: analyzerLoading ? "Scanning" : "Ready" },
     ],
     [speaking, listening, messages.length, analyzerLoading]
   );
+
+  useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+      const savedIdea = localStorage.getItem(PROJECT_IDEA_STORAGE_KEY);
+      const savedAnalysis = localStorage.getItem(PROJECT_ANALYSIS_STORAGE_KEY);
+
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages) as Message[];
+
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+        }
+      }
+
+      if (savedIdea) setProjectIdea(savedIdea);
+      if (savedAnalysis) setProjectAnalysis(savedAnalysis);
+    } catch {
+      setMessages(initialMessages);
+    } finally {
+      setLoadedSavedData(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loadedSavedData) return;
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages, loadedSavedData]);
+
+  useEffect(() => {
+    if (!loadedSavedData) return;
+    localStorage.setItem(PROJECT_IDEA_STORAGE_KEY, projectIdea);
+  }, [projectIdea, loadedSavedData]);
+
+  useEffect(() => {
+    if (!loadedSavedData) return;
+    localStorage.setItem(PROJECT_ANALYSIS_STORAGE_KEY, projectAnalysis);
+  }, [projectAnalysis, loadedSavedData]);
 
   useEffect(() => {
     const browserWindow = window as WindowWithSpeech;
@@ -411,12 +457,21 @@ export default function Home() {
   function clearChat() {
     stopSpeaking();
     setInput("");
-    setMessages([
+    const clearMessage = [
       {
-        role: "ai",
+        role: "ai" as const,
         text: "Chat cleared. Jarvis is ready for a new command.",
       },
-    ]);
+    ];
+    setMessages(clearMessage);
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(clearMessage));
+  }
+
+  function clearSavedTools() {
+    setProjectIdea("");
+    setProjectAnalysis("");
+    localStorage.removeItem(PROJECT_IDEA_STORAGE_KEY);
+    localStorage.removeItem(PROJECT_ANALYSIS_STORAGE_KEY);
   }
 
   function toggleSpeechOutput() {
@@ -656,7 +711,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  AI Project Analyzer
+                  Saved Chat History
                 </span>
               </div>
 
@@ -669,7 +724,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, voice output, session memory, project analysis, 3D
+                voice input, voice output, saved history, project analysis, 3D
                 visuals, and modern web development skills in one live portfolio
                 project.
               </p>
@@ -684,6 +739,14 @@ Keep it clear, practical, and impressive for a developer portfolio.
                   <Rocket className="mr-2 inline h-5 w-5" />
                   Activate Demo
                 </button>
+
+                <Link
+                  href="/resume-reviewer"
+                  className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10"
+                >
+                  <FileText className="mr-2 inline h-5 w-5" />
+                  Resume Reviewer
+                </Link>
 
                 <a
                   href="mailto:alibaloch18oct@gmail.com"
@@ -845,8 +908,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Test memory: say “My name is Shazee”, then ask “What is my
-                name?”
+                Saved in this browser. Refresh the page to test saved chat.
               </p>
             </div>
           </motion.div>
@@ -859,7 +921,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
               <h3 className="text-2xl font-bold">AI Project Analyzer</h3>
               <p className="mt-1 text-sm text-slate-400">
                 Paste any app idea and Jarvis will turn it into a professional
-                portfolio plan.
+                portfolio plan. Your analysis is saved after refresh.
               </p>
             </div>
           </div>
@@ -888,10 +950,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </button>
 
                 <button
-                  onClick={() => {
-                    setProjectIdea("");
-                    setProjectAnalysis("");
-                  }}
+                  onClick={clearSavedTools}
                   className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10"
                 >
                   Reset
@@ -992,9 +1051,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
             <div>
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
-                This app is live, AI-connected, voice-enabled, memory-upgraded,
-                project-analysis powered, and deployed as a portfolio-ready
-                project.
+                This app is live, AI-connected, voice-enabled, saved-history
+                upgraded, project-analysis powered, and deployed as a
+                portfolio-ready project.
               </p>
             </div>
 
