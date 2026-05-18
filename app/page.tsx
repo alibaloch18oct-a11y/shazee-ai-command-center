@@ -18,7 +18,6 @@ import {
   Mail,
   Mic,
   MicOff,
-  MonitorSmartphone,
   Rocket,
   Save,
   Send,
@@ -77,7 +76,7 @@ const PROJECT_ANALYSIS_STORAGE_KEY = "shazee-ai-project-analysis";
 const initialMessages: Message[] = [
   {
     role: "ai",
-    text: "Welcome Shazee. I am your AI Command Center. I can remember this chat session, answer with voice, and help showcase your portfolio.",
+    text: "Welcome Shazee. I am your AI Command Center. Click the mic, speak your command, and I will reply automatically.",
   },
 ];
 
@@ -211,13 +210,13 @@ const featureCards = [
   },
   {
     icon: Volume2,
-    title: "Jarvis Voice",
-    text: "Smoother human-like voice output using the best available browser voice.",
+    title: "Fast Jarvis Voice",
+    text: "Faster, smoother, human-like voice output using the best available browser voice.",
   },
   {
-    icon: Save,
-    title: "Saved Chat",
-    text: "Chat history and project analysis are saved in the browser after refresh.",
+    icon: Mic,
+    title: "Auto Voice Send",
+    text: "Speak through the mic and Jarvis automatically sends your command after you finish talking.",
   },
   {
     icon: BarChart3,
@@ -234,6 +233,7 @@ const skills = [
   "Groq API",
   "AI Chat Integration",
   "Voice Input",
+  "Auto Voice Send",
   "Voice Output",
   "Saved Chat",
   "Analytics",
@@ -242,7 +242,6 @@ const skills = [
   "React Three Fiber",
   "Framer Motion",
   "Responsive UI",
-  "PWA Setup",
   "GitHub",
   "Vercel Deployment",
 ];
@@ -251,7 +250,7 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, smoother voice output, animated 3D globe, saved chat history, analytics, project analyzer, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, auto voice send, faster voice output, animated 3D globe, saved chat history, analytics, project analyzer, and responsive web design.",
   },
   {
     title: "AI Resume Reviewer",
@@ -285,6 +284,8 @@ export default function Home() {
 
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef<Message[]>(initialMessages);
+  const loadingRef = useRef(false);
 
   const systemStatus = useMemo(
     () => [
@@ -293,11 +294,19 @@ export default function Home() {
         label: "Voice",
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
+      { label: "Auto Send", value: "Active" },
       { label: "Analytics", value: "Active" },
-      { label: "Admin", value: "Added" },
     ],
     [speaking, listening]
   );
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     trackAnalytics("visits");
@@ -314,6 +323,7 @@ export default function Home() {
 
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
           setMessages(parsedMessages);
+          messagesRef.current = parsedMessages;
         }
       }
 
@@ -321,6 +331,7 @@ export default function Home() {
       if (savedAnalysis) setProjectAnalysis(savedAnalysis);
     } catch {
       setMessages(initialMessages);
+      messagesRef.current = initialMessages;
     } finally {
       setLoadedSavedData(true);
     }
@@ -357,10 +368,21 @@ export default function Home() {
     recognition.continuous = false;
 
     recognition.onresult = (event: SpeechRecognitionEventType) => {
-      const transcript = event.results[0][0].transcript;
+      const transcript = event.results[0][0].transcript.trim();
+
+      if (!transcript) {
+        setListening(false);
+        setSpeaking(false);
+        return;
+      }
+
       setInput(transcript);
       setListening(false);
       setSpeaking(true);
+
+      setTimeout(() => {
+        sendMessageText(transcript);
+      }, 350);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEventType) => {
@@ -425,91 +447,70 @@ export default function Home() {
   }
 
   function speakText(text: string) {
-  if (!speechEnabled) return;
-  if (typeof window === "undefined") return;
+    if (!speechEnabled) return;
+    if (typeof window === "undefined") return;
 
-  if (!("speechSynthesis" in window)) {
-    setMessages((old) => [
-      ...old,
-      {
-        role: "ai",
-        text: "Speech output is not supported in this browser.",
-      },
-    ]);
-    return;
+    if (!("speechSynthesis" in window)) {
+      setMessages((old) => [
+        ...old,
+        {
+          role: "ai",
+          text: "Speech output is not supported in this browser.",
+        },
+      ]);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const cleanedText = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
+
+    // Faster original-style Jarvis voice
+    utterance.lang = "en-US";
+    utterance.rate = 1.05;
+    utterance.pitch = 0.98;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+
+    const preferredVoice =
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("microsoft guy")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("microsoft david")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("microsoft mark")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("google us english")
+      ) ||
+      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ||
+      voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ||
+      voices[0];
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => {
+      setSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setSpeaking(false);
+    };
+
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 80);
   }
-
-  window.speechSynthesis.cancel();
-
-  const cleanedText = cleanTextForSpeech(text);
-  const utterance = new SpeechSynthesisUtterance(cleanedText);
-
-  // Jarvis-style: smooth British/English assistant voice
-  utterance.lang = "en-GB";
-  utterance.rate = 0.9;
-  utterance.pitch = 0.88;
-  utterance.volume = 1;
-
-  const voices = window.speechSynthesis.getVoices();
-
-  const preferredVoice =
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("microsoft george")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("microsoft ryan")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("google uk english male")
-    ) ||
-    voices.find(
-      (voice) =>
-        voice.lang.toLowerCase().startsWith("en-gb") &&
-        voice.name.toLowerCase().includes("male")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("daniel")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("arthur")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("guy")
-    ) ||
-    voices.find((voice) =>
-      voice.name.toLowerCase().includes("david")
-    ) ||
-    voices.find((voice) =>
-      voice.lang.toLowerCase().startsWith("en-gb")
-    ) ||
-    voices.find((voice) =>
-      voice.lang.toLowerCase().startsWith("en-us")
-    ) ||
-    voices.find((voice) =>
-      voice.lang.toLowerCase().startsWith("en")
-    ) ||
-    voices[0];
-
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
-
-  utterance.onstart = () => {
-    setSpeaking(true);
-  };
-
-  utterance.onend = () => {
-    setSpeaking(false);
-  };
-
-  utterance.onerror = () => {
-    setSpeaking(false);
-  };
-
-  setTimeout(() => {
-    window.speechSynthesis.speak(utterance);
-  }, 120);
-}
 
   function stopSpeaking() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -531,6 +532,7 @@ export default function Home() {
     ];
 
     setMessages(clearMessage);
+    messagesRef.current = clearMessage;
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(clearMessage));
   }
 
@@ -618,17 +620,27 @@ export default function Home() {
   }
 
   async function sendMessage() {
-    if (!input.trim() || loading) return;
+    await sendMessageText(input);
+  }
 
-    const userText = input.trim();
-    const currentHistory = messages;
+  async function sendMessageText(textToSend: string) {
+    if (!textToSend.trim() || loadingRef.current) return;
+
+    const userText = textToSend.trim();
+    const currentHistory = messagesRef.current;
 
     trackAnalytics("chatMessages");
     stopSpeaking();
 
-    setMessages((old) => [...old, { role: "user", text: userText }]);
+    setMessages((old) => {
+      const updated: Message[] = [...old, { role: "user", text: userText }];
+      messagesRef.current = updated;
+      return updated;
+    });
+
     setInput("");
     setLoading(true);
+    loadingRef.current = true;
     setSpeaking(true);
 
     try {
@@ -651,13 +663,18 @@ export default function Home() {
 
       const reply = data.reply || "I could not generate a response.";
 
-      setMessages((old) => [
-        ...old,
-        {
-          role: "ai",
-          text: reply,
-        },
-      ]);
+      setMessages((old) => {
+        const updated: Message[] = [
+          ...old,
+          {
+            role: "ai",
+            text: reply,
+          },
+        ];
+
+        messagesRef.current = updated;
+        return updated;
+      });
 
       speakText(reply);
     } catch (error) {
@@ -666,17 +683,23 @@ export default function Home() {
           ? `Error: ${error.message}`
           : "Error: Something went wrong.";
 
-      setMessages((old) => [
-        ...old,
-        {
-          role: "ai",
-          text: errorText,
-        },
-      ]);
+      setMessages((old) => {
+        const updated: Message[] = [
+          ...old,
+          {
+            role: "ai",
+            text: errorText,
+          },
+        ];
+
+        messagesRef.current = updated;
+        return updated;
+      });
 
       speakText(errorText);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   }
 
@@ -892,7 +915,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  Analytics Connected
+                  Auto Voice Reply
                 </span>
               </div>
 
@@ -905,9 +928,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, smoother voice output, saved history, project
-                analysis, analytics, admin controls, PDF export, 3D visuals, and
-                modern web development skills.
+                voice input, automatic voice replies, faster voice output, saved
+                history, project analysis, analytics, admin controls, PDF export,
+                3D visuals, and modern web development skills.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -1006,7 +1029,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 <div>
                   <h3 className="text-xl font-bold">AI Console</h3>
                   <p className="text-sm text-slate-400">
-                    Real AI chat powered by Groq
+                    Speak once — Jarvis sends automatically
                   </p>
                 </div>
 
@@ -1088,7 +1111,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
                     if (event.key === "Enter") sendMessage();
                   }}
                   placeholder={
-                    listening ? "Listening..." : "Type or speak command..."
+                    listening
+                      ? "Listening..."
+                      : "Type or click mic and speak..."
                   }
                   className="min-w-0 flex-1 rounded-2xl border border-cyan-300/15 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/50"
                 />
@@ -1107,7 +1132,8 @@ Keep it clear, practical, and impressive for a developer portfolio.
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Chat messages are counted in Analytics.
+                Voice mode: click mic, speak, stop talking — Jarvis replies
+                automatically.
               </p>
             </div>
           </motion.div>
@@ -1193,8 +1219,8 @@ Keep it clear, practical, and impressive for a developer portfolio.
             </div>
             <p className="text-sm leading-7 text-slate-300">
               Shazee is building modern AI-powered applications with futuristic
-              interfaces, voice interaction, API integration, analytics, PDF
-              export, and responsive web design.
+              interfaces, voice interaction, auto voice command, API integration,
+              analytics, PDF export, and responsive web design.
             </p>
           </div>
 
@@ -1258,7 +1284,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
             <div>
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
-                This app is live, AI-connected, voice-enabled, saved-history
+                This app is live, AI-connected, voice-enabled, auto-send
                 upgraded, analytics-powered, admin-dashboard powered, and
                 deployed as a portfolio-ready project.
               </p>
