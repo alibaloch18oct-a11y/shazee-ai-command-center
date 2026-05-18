@@ -5,8 +5,10 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import { motion } from "framer-motion";
 import {
+  BarChart3,
   Bot,
   Brain,
+  Download,
   ExternalLink,
   FileText,
   Globe2,
@@ -30,6 +32,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as THREE from "three";
+import jsPDF from "jspdf";
+import { trackAnalytics } from "@/lib/analytics";
 
 type Message = {
   role: "user" | "ai";
@@ -208,7 +212,7 @@ const featureCards = [
   {
     icon: Volume2,
     title: "Jarvis Voice",
-    text: "Smoother deeper voice output using the best available browser voice.",
+    text: "Smoother human-like voice output using the best available browser voice.",
   },
   {
     icon: Save,
@@ -216,9 +220,9 @@ const featureCards = [
     text: "Chat history and project analysis are saved in the browser after refresh.",
   },
   {
-    icon: Lightbulb,
-    title: "Project Analyzer",
-    text: "Users can paste a project idea and get an AI-powered portfolio analysis.",
+    icon: BarChart3,
+    title: "Analytics",
+    text: "Tracks visits, chat messages, project analyses, resume reviews, reports, and PDF downloads.",
   },
 ];
 
@@ -232,6 +236,8 @@ const skills = [
   "Voice Input",
   "Voice Output",
   "Saved Chat",
+  "Analytics",
+  "PDF Export",
   "Three.js",
   "React Three Fiber",
   "Framer Motion",
@@ -245,22 +251,22 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, smoother voice output, animated 3D globe, saved chat history, project analyzer, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, smoother voice output, animated 3D globe, saved chat history, analytics, project analyzer, and responsive web design.",
   },
   {
     title: "AI Resume Reviewer",
     tech: "Next.js, Groq API, Career AI Tool",
-    text: "A separate AI-powered resume reviewer that scores resumes, suggests ATS keywords, improves profile summaries, and gives job application advice.",
+    text: "A separate AI-powered resume reviewer that scores resumes, suggests ATS keywords, improves profile summaries, and exports PDF reports.",
   },
   {
     title: "Admin Dashboard",
     tech: "Next.js, AI Report Generator, Portfolio Controls",
-    text: "A private-style admin area with project status cards, build checklist, quick links, and AI-generated project report.",
+    text: "A private-style admin area with project status cards, build checklist, quick links, analytics, and AI-generated project report.",
   },
   {
-    title: "Jarvis Desktop Assistant",
-    tech: "Python, AI API, Voice Features",
-    text: "A local desktop AI assistant concept inspired by Jarvis, built with voice interaction and a futuristic interface.",
+    title: "Analytics Dashboard",
+    tech: "LocalStorage, Next.js, UI Tracking",
+    text: "Tracks user activity such as visits, chat usage, PDF downloads, resume reviews, project analyses, and admin reports.",
   },
 ];
 
@@ -287,11 +293,15 @@ export default function Home() {
         label: "Voice",
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
-      { label: "Saved", value: messages.length > 1 ? "Active" : "Ready" },
+      { label: "Analytics", value: "Active" },
       { label: "Admin", value: "Added" },
     ],
-    [speaking, listening, messages.length]
+    [speaking, listening]
   );
+
+  useEffect(() => {
+    trackAnalytics("visits");
+  }, []);
 
   useEffect(() => {
     try {
@@ -435,31 +445,30 @@ export default function Home() {
     const utterance = new SpeechSynthesisUtterance(cleanedText);
 
     utterance.lang = "en-US";
-
-    // Smoother Jarvis-style voice settings
-    utterance.rate = 0.88;
-    utterance.pitch = 0.72;
+    utterance.rate = 0.93;
+    utterance.pitch = 0.95;
     utterance.volume = 1;
 
     const voices = window.speechSynthesis.getVoices();
 
     const preferredVoice =
       voices.find((voice) =>
-        voice.name.toLowerCase().includes("microsoft david")
+        voice.name.toLowerCase().includes("microsoft guy")
       ) ||
       voices.find((voice) =>
-        voice.name.toLowerCase().includes("microsoft mark")
+        voice.name.toLowerCase().includes("microsoft aria")
       ) ||
       voices.find((voice) =>
-        voice.name.toLowerCase().includes("google uk english male")
+        voice.name.toLowerCase().includes("microsoft jenny")
       ) ||
       voices.find((voice) =>
-        voice.name.toLowerCase().includes("english male")
+        voice.name.toLowerCase().includes("google us english")
       ) ||
-      voices.find((voice) => voice.name.toLowerCase().includes("david")) ||
-      voices.find((voice) => voice.name.toLowerCase().includes("mark")) ||
-      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb")) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("google uk english")
+      ) ||
       voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ||
+      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb")) ||
       voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ||
       voices[0];
 
@@ -481,7 +490,7 @@ export default function Home() {
 
     setTimeout(() => {
       window.speechSynthesis.speak(utterance);
-    }, 150);
+    }, 120);
   }
 
   function stopSpeaking() {
@@ -596,6 +605,7 @@ export default function Home() {
     const userText = input.trim();
     const currentHistory = messages;
 
+    trackAnalytics("chatMessages");
     stopSpeaking();
 
     setMessages((old) => [...old, { role: "user", text: userText }]);
@@ -656,6 +666,8 @@ export default function Home() {
     if (!projectIdea.trim() || analyzerLoading) return;
 
     const idea = projectIdea.trim();
+
+    trackAnalytics("projectAnalyses");
     setAnalyzerLoading(true);
     setProjectAnalysis("");
 
@@ -709,6 +721,113 @@ Keep it clear, practical, and impressive for a developer portfolio.
     }
   }
 
+  function downloadProjectPdf() {
+    if (!projectAnalysis.trim()) return;
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4",
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 44;
+    const maxWidth = pageWidth - margin * 2;
+
+    let y = 54;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("AI Project Analysis Report", margin, y);
+
+    y += 24;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Generated by Shazee AI Command Center", margin, y);
+
+    y += 28;
+
+    doc.setDrawColor(34, 211, 238);
+    doc.line(margin, y, pageWidth - margin, y);
+
+    y += 28;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Project Idea", margin, y);
+
+    y += 20;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+
+    const ideaLines = doc.splitTextToSize(projectIdea, maxWidth);
+
+    ideaLines.forEach((line: string) => {
+      if (y > pageHeight - 60) {
+        doc.addPage();
+        y = 54;
+      }
+
+      doc.text(line, margin, y);
+      y += 16;
+    });
+
+    y += 24;
+
+    if (y > pageHeight - 80) {
+      doc.addPage();
+      y = 54;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("AI Analysis", margin, y);
+
+    y += 20;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+
+    const analysisLines = doc.splitTextToSize(projectAnalysis, maxWidth);
+
+    analysisLines.forEach((line: string) => {
+      if (y > pageHeight - 60) {
+        doc.addPage();
+        y = 54;
+      }
+
+      doc.text(line, margin, y);
+      y += 16;
+    });
+
+    y += 20;
+
+    if (y > pageHeight - 80) {
+      doc.addPage();
+      y = 54;
+    }
+
+    doc.setDrawColor(34, 211, 238);
+    doc.line(margin, y, pageWidth - margin, y);
+
+    y += 22;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Contact", margin, y);
+
+    y += 16;
+
+    doc.setFont("helvetica", "normal");
+    doc.text("Email: alibaloch18oct@gmail.com", margin, y);
+
+    trackAnalytics("pdfDownloads");
+    doc.save("shazee-ai-project-analysis.pdf");
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#020617] text-white">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.16),transparent_35%)]" />
@@ -755,7 +874,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  Smoother Jarvis Voice
+                  Analytics Connected
                 </span>
               </div>
 
@@ -768,9 +887,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, smoother Jarvis-style voice output, saved history,
-                project analysis, admin controls, 3D visuals, and modern web
-                development skills.
+                voice input, smoother voice output, saved history, project
+                analysis, analytics, admin controls, PDF export, 3D visuals, and
+                modern web development skills.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -798,6 +917,14 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 >
                   <ShieldCheck className="mr-2 inline h-5 w-5" />
                   Admin Dashboard
+                </Link>
+
+                <Link
+                  href="/analytics"
+                  className="rounded-2xl border border-blue-300/25 bg-blue-300/10 px-5 py-3 font-semibold text-blue-100 transition hover:bg-blue-300/20"
+                >
+                  <BarChart3 className="mr-2 inline h-5 w-5" />
+                  Analytics
                 </Link>
 
                 <a
@@ -852,7 +979,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
             transition={{ duration: 0.7, delay: 0.15 }}
             className="space-y-6"
           >
-            <AIGlobe active={speaking || loading || listening || analyzerLoading} />
+            <AIGlobe
+              active={speaking || loading || listening || analyzerLoading}
+            />
 
             <div className="rounded-[2rem] border border-cyan-400/20 bg-black/40 p-5 backdrop-blur-xl">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -960,7 +1089,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                For best Jarvis-like voice, test in Microsoft Edge on Windows.
+                Chat messages are counted in Analytics.
               </p>
             </div>
           </motion.div>
@@ -1007,6 +1136,15 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 >
                   Reset
                 </button>
+
+                <button
+                  onClick={downloadProjectPdf}
+                  disabled={!projectAnalysis.trim()}
+                  className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-5 py-3 font-semibold text-emerald-100 transition hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Download className="mr-2 inline h-5 w-5" />
+                  Download PDF
+                </button>
               </div>
             </div>
 
@@ -1037,9 +1175,8 @@ Keep it clear, practical, and impressive for a developer portfolio.
             </div>
             <p className="text-sm leading-7 text-slate-300">
               Shazee is building modern AI-powered applications with futuristic
-              interfaces, voice interaction, API integration, and responsive web
-              design. This project demonstrates practical AI app development
-              from frontend UI to backend AI connection and live deployment.
+              interfaces, voice interaction, API integration, analytics, PDF
+              export, and responsive web design.
             </p>
           </div>
 
@@ -1104,8 +1241,8 @@ Keep it clear, practical, and impressive for a developer portfolio.
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
                 This app is live, AI-connected, voice-enabled, saved-history
-                upgraded, admin-dashboard powered, and deployed as a
-                portfolio-ready project.
+                upgraded, analytics-powered, admin-dashboard powered, and
+                deployed as a portfolio-ready project.
               </p>
             </div>
 
@@ -1129,11 +1266,11 @@ Keep it clear, practical, and impressive for a developer portfolio.
               </a>
 
               <Link
-                href="/admin"
-                className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-5 py-3 font-semibold text-emerald-100 transition hover:bg-emerald-300/20"
+                href="/analytics"
+                className="rounded-2xl border border-blue-300/25 bg-blue-300/10 px-5 py-3 font-semibold text-blue-100 transition hover:bg-blue-300/20"
               >
-                <ShieldCheck className="mr-2 inline h-5 w-5" />
-                Admin
+                <BarChart3 className="mr-2 inline h-5 w-5" />
+                Analytics
               </Link>
             </div>
           </div>

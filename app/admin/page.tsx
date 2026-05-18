@@ -30,6 +30,7 @@ import {
   WandSparkles,
   Zap,
 } from "lucide-react";
+import { trackAnalytics } from "@/lib/analytics";
 
 const ADMIN_PASSCODE = "shazee-admin";
 
@@ -48,28 +49,24 @@ const stats = [
     value: "Online",
     icon: Bot,
     text: "Groq API connected through a secure Next.js API route.",
-    tone: "cyan",
   },
   {
     title: "Voice System",
     value: "Active",
     icon: Cpu,
-    text: "Voice input and smoother Jarvis-style voice output are enabled.",
-    tone: "emerald",
+    text: "Voice input and smoother human-like voice output are enabled.",
   },
   {
     title: "Deployment",
     value: "Live",
     icon: Rocket,
     text: "GitHub repository connected with Vercel auto-deployment.",
-    tone: "blue",
   },
   {
     title: "Portfolio",
     value: "Ready",
     icon: Layers3,
-    text: "About, skills, projects, resume reviewer, analyzer, and admin added.",
-    tone: "purple",
+    text: "About, skills, projects, resume reviewer, analyzer, analytics, and admin added.",
   },
 ];
 
@@ -85,7 +82,10 @@ const checklist = [
   "3D Jarvis globe added",
   "Portfolio sections added",
   "Project analyzer added",
+  "Project analyzer PDF export added",
   "Resume reviewer page added",
+  "Resume reviewer PDF export added",
+  "Analytics dashboard added",
   "Admin dashboard added",
   "GitHub repository uploaded",
   "Vercel deployment completed",
@@ -96,31 +96,36 @@ const tools = [
     name: "AI Console",
     status: "Live",
     health: "Excellent",
-    details: "Main chat assistant with session memory, saved history, voice input, and voice output.",
+    details:
+      "Main chat assistant with session memory, saved history, voice input, and voice output.",
   },
   {
     name: "Project Analyzer",
     status: "Live",
     health: "Excellent",
-    details: "Turns project ideas into portfolio-ready technical plans using AI.",
+    details:
+      "Turns project ideas into portfolio-ready technical plans and exports PDF reports.",
   },
   {
     name: "Resume Reviewer",
     status: "Live",
     health: "Excellent",
-    details: "Reviews resumes for ATS keywords, profile summary, skills, and improvements.",
+    details:
+      "Reviews resumes for ATS keywords, profile summary, skills, improvements, and exports PDF reports.",
+  },
+  {
+    name: "Analytics Dashboard",
+    status: "Live",
+    health: "Good",
+    details:
+      "Tracks visits, chat messages, resume reviews, project analyses, admin reports, and PDF downloads using localStorage.",
   },
   {
     name: "Admin Dashboard",
     status: "Live",
     health: "Excellent",
-    details: "Control panel for app status, saved data, reports, deployment checklist, and roadmap.",
-  },
-  {
-    name: "PWA Setup",
-    status: "Ready",
-    health: "Good",
-    details: "Manifest and app icon configured for installable web app behavior.",
+    details:
+      "Control panel for app status, saved data, reports, deployment checklist, roadmap, and quick links.",
   },
   {
     name: "Deployment Pipeline",
@@ -132,9 +137,9 @@ const tools = [
 
 const roadmap = [
   {
-    title: "Premium AI Voice",
+    title: "Database Storage",
     level: "Next",
-    text: "Use ElevenLabs or OpenAI TTS for a more realistic Jarvis-style voice.",
+    text: "Move saved chat, analytics, project reports, and resume reviews from localStorage to Supabase.",
   },
   {
     title: "Real Login System",
@@ -142,19 +147,19 @@ const roadmap = [
     text: "Replace demo passcode with Clerk, Supabase Auth, Firebase Auth, or NextAuth.",
   },
   {
-    title: "Database Storage",
+    title: "Premium AI Voice",
     level: "Important",
-    text: "Save user chat history, project analysis, and reports using Supabase or Firebase.",
+    text: "Use ElevenLabs or OpenAI TTS for a more realistic Jarvis-style voice.",
   },
   {
-    title: "Analytics Dashboard",
+    title: "Cloud Analytics",
     level: "Advanced",
-    text: "Track visitors, tool usage, messages, resume reviews, and project analysis count.",
+    text: "Track visitors and tool usage in a real database instead of only the browser.",
   },
   {
-    title: "PDF Export",
+    title: "PDF Styling Upgrade",
     level: "Useful",
-    text: "Allow users to export resume review and project analyzer results as PDF.",
+    text: "Add better PDF templates, sections, branding, and downloadable portfolio reports.",
   },
 ];
 
@@ -242,6 +247,7 @@ export default function AdminDashboardPage() {
   }
 
   async function generateReport() {
+    trackAnalytics("adminReports");
     setLoadingReport(true);
     setReport("");
 
@@ -262,12 +268,15 @@ Main features:
 - AI chat
 - Groq API backend route
 - Voice input
-- Smoother Jarvis-style voice output
+- Smoother human-like voice output
 - 3D Jarvis globe
 - Chat memory
 - Saved browser history
 - AI project analyzer
+- AI project analyzer PDF export
 - AI resume reviewer
+- AI resume reviewer PDF export
+- Analytics dashboard
 - Portfolio sections
 - Admin dashboard
 - GitHub repository
@@ -404,10 +413,10 @@ Final Rating:
               </div>
 
               <div className="rounded-2xl border border-cyan-400/15 bg-black/25 p-4">
-                <Terminal className="mb-2 h-5 w-5 text-cyan-300" />
-                <p className="text-sm font-semibold text-cyan-50">AI Report</p>
+                <BarChart3 className="mb-2 h-5 w-5 text-cyan-300" />
+                <p className="text-sm font-semibold text-cyan-50">Analytics</p>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  Generate project analysis with Jarvis.
+                  Tracks reports and app feature usage.
                 </p>
               </div>
 
@@ -458,6 +467,14 @@ Final Rating:
               Home
             </Link>
 
+            <Link
+              href="/analytics"
+              className="rounded-2xl border border-blue-300/25 bg-blue-300/10 px-4 py-2 text-sm font-semibold text-blue-100 transition hover:bg-blue-300/20"
+            >
+              <BarChart3 className="mr-2 inline h-4 w-4" />
+              Analytics
+            </Link>
+
             <button
               onClick={() => {
                 setUnlocked(false);
@@ -498,8 +515,8 @@ Final Rating:
 
               <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">
                 Monitor project health, saved browser data, tool status,
-                deployment checklist, roadmap, and generate a professional AI
-                project report for your portfolio.
+                deployment checklist, roadmap, analytics, and generate a
+                professional AI project report for your portfolio.
               </p>
             </div>
 
@@ -687,6 +704,14 @@ Final Rating:
                 Resume Reviewer
               </Link>
 
+              <Link
+                href="/analytics"
+                className="rounded-2xl border border-blue-300/20 bg-blue-300/10 px-4 py-3 text-sm font-semibold text-blue-100 transition hover:bg-blue-300/20"
+              >
+                <BarChart3 className="mr-2 inline h-4 w-4" />
+                Analytics Dashboard
+              </Link>
+
               <a
                 href="https://github.com/alibaloch18oct-a11y/shazee-ai-command-center"
                 target="_blank"
@@ -824,7 +849,8 @@ Final Rating:
                 ) : (
                   <div className="flex min-h-72 items-center justify-center rounded-2xl border border-dashed border-cyan-300/15 p-5 text-center text-sm leading-7 text-slate-500">
                     Click “Generate AI Report” to create a professional project
-                    report for your portfolio.
+                    report for your portfolio. This action is tracked in
+                    Analytics.
                   </div>
                 )}
               </div>
@@ -837,15 +863,15 @@ Final Rating:
             <div>
               <h3 className="text-2xl font-bold">Admin dashboard upgraded</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
-                This dashboard now feels more like a real product control panel:
-                project health, local data monitor, tool status, checklist,
-                roadmap, quick links, and AI reporting.
+                This dashboard includes project health, local data monitor, tool
+                status, checklist, roadmap, quick links, AI reporting, and
+                analytics tracking.
               </p>
             </div>
 
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-5 py-3 text-sm font-semibold text-cyan-100">
               <Zap className="mr-2 inline h-5 w-5" />
-              Upgrade Complete
+              Analytics Connected
             </div>
           </div>
         </section>

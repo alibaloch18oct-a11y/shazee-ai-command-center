@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import jsPDF from "jspdf";
+import { trackAnalytics } from "@/lib/analytics";
 
 export default function ResumeReviewerPage() {
   const [resumeText, setResumeText] = useState("");
@@ -24,6 +25,7 @@ export default function ResumeReviewerPage() {
   async function reviewResume() {
     if (!resumeText.trim() || loading) return;
 
+    trackAnalytics("resumeReviews");
     setLoading(true);
     setResult("");
 
@@ -160,6 +162,7 @@ Rules:
     doc.setFont("helvetica", "normal");
     doc.text("Email: alibaloch18oct@gmail.com", margin, y);
 
+    trackAnalytics("pdfDownloads");
     doc.save("shazee-ai-resume-review.pdf");
   }
 
@@ -205,7 +208,7 @@ Rules:
             </span>
 
             <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-              PDF Export Added
+              Analytics + PDF Export
             </span>
           </div>
 
@@ -219,7 +222,7 @@ Rules:
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">
             Paste your resume text below and Jarvis will analyze it for profile
             summary, weak points, ATS keywords, missing skills, and improvement
-            advice. You can also download the review as a PDF report.
+            advice. Reviews and PDF downloads are tracked in Analytics.
           </p>
         </div>
 
