@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import {
   Bot,
   Brain,
-  Code2,
   ExternalLink,
   Globe2,
   Layers3,
@@ -18,7 +17,6 @@ import {
   MonitorSmartphone,
   Rocket,
   Send,
-  ShieldCheck,
   Sparkles,
   Terminal,
   UserRound,
@@ -230,7 +228,7 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, session memory, and responsive web design.",
   },
   {
     title: "Jarvis Desktop Assistant",
@@ -249,6 +247,13 @@ const projects = [
   },
 ];
 
+const initialMessages: Message[] = [
+  {
+    role: "ai",
+    text: "Welcome Shazee. I am your AI Command Center. I can remember this chat session, answer with voice, and help showcase your portfolio.",
+  },
+];
+
 export default function Home() {
   const [input, setInput] = useState("");
   const [speaking, setSpeaking] = useState(false);
@@ -257,13 +262,9 @@ export default function Home() {
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [speechEnabled, setSpeechEnabled] = useState(true);
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "ai",
-      text: "Welcome Shazee. I am your AI Command Center. Click the mic button, speak your command, and I will reply with voice.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   const systemStatus = useMemo(
     () => [
@@ -272,10 +273,10 @@ export default function Home() {
         label: "Voice",
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
-      { label: "Portfolio", value: "Active" },
+      { label: "Memory", value: messages.length > 1 ? "Active" : "Ready" },
       { label: "Mode", value: "Live AI" },
     ],
-    [speaking, listening]
+    [speaking, listening, messages.length]
   );
 
   useEffect(() => {
@@ -327,6 +328,10 @@ export default function Home() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading, listening]);
 
   function cleanTextForSpeech(text: string) {
     return text
@@ -396,6 +401,17 @@ export default function Home() {
     }
 
     setSpeaking(false);
+  }
+
+  function clearChat() {
+    stopSpeaking();
+    setInput("");
+    setMessages([
+      {
+        role: "ai",
+        text: "Chat cleared. Jarvis is ready for a new command.",
+      },
+    ]);
   }
 
   function toggleSpeechOutput() {
@@ -474,6 +490,7 @@ export default function Home() {
     if (!input.trim() || loading) return;
 
     const userText = input.trim();
+    const currentHistory = messages;
 
     stopSpeaking();
 
@@ -490,6 +507,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           message: userText,
+          history: currentHistory,
         }),
       });
 
@@ -574,6 +592,10 @@ export default function Home() {
                 <span className="rounded-full border border-blue-300/20 bg-blue-300/10 px-4 py-2 text-sm text-blue-100">
                   Web + Mobile Ready
                 </span>
+
+                <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
+                  Session Memory Added
+                </span>
               </div>
 
               <h2 className="max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
@@ -585,8 +607,8 @@ export default function Home() {
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, voice output, 3D visuals, and modern web
-                development skills in one live portfolio project.
+                voice input, voice output, session memory, 3D visuals, and
+                modern web development skills in one live portfolio project.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -655,14 +677,23 @@ export default function Home() {
             <AIGlobe active={speaking || loading || listening} />
 
             <div className="rounded-[2rem] border border-cyan-400/20 bg-black/40 p-5 backdrop-blur-xl">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-xl font-bold">AI Console</h3>
                   <p className="text-sm text-slate-400">
                     Real AI chat powered by Groq
                   </p>
                 </div>
-                <Terminal className="text-cyan-300" />
+
+                <div className="flex items-center gap-2">
+                  <Terminal className="hidden text-cyan-300 sm:block" />
+                  <button
+                    onClick={clearChat}
+                    className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-300/20"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
               <div className="mb-4 h-64 space-y-3 overflow-y-auto rounded-2xl border border-cyan-400/10 bg-slate-950/70 p-4">
@@ -692,6 +723,8 @@ export default function Home() {
                     Listening... speak now
                   </div>
                 )}
+
+                <div ref={chatEndRef} />
               </div>
 
               <div className="flex gap-3">
@@ -749,7 +782,8 @@ export default function Home() {
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Tip: Ask “Who built you?” or “What can this app do?”
+                Test memory: say “My name is Shazee”, then ask “What is my
+                name?”
               </p>
             </div>
           </motion.div>
@@ -829,8 +863,8 @@ export default function Home() {
             <div>
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
-                This app is live, AI-connected, voice-enabled, and deployed as a
-                portfolio-ready project.
+                This app is live, AI-connected, voice-enabled, memory-upgraded,
+                and deployed as a portfolio-ready project.
               </p>
             </div>
 
