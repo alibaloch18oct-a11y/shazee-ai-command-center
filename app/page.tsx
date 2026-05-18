@@ -425,73 +425,91 @@ export default function Home() {
   }
 
   function speakText(text: string) {
-    if (!speechEnabled) return;
-    if (typeof window === "undefined") return;
+  if (!speechEnabled) return;
+  if (typeof window === "undefined") return;
 
-    if (!("speechSynthesis" in window)) {
-      setMessages((old) => [
-        ...old,
-        {
-          role: "ai",
-          text: "Speech output is not supported in this browser.",
-        },
-      ]);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const cleanedText = cleanTextForSpeech(text);
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-
-    utterance.lang = "en-US";
-    utterance.rate = 0.93;
-    utterance.pitch = 0.95;
-    utterance.volume = 1;
-
-    const voices = window.speechSynthesis.getVoices();
-
-    const preferredVoice =
-      voices.find((voice) =>
-        voice.name.toLowerCase().includes("microsoft guy")
-      ) ||
-      voices.find((voice) =>
-        voice.name.toLowerCase().includes("microsoft aria")
-      ) ||
-      voices.find((voice) =>
-        voice.name.toLowerCase().includes("microsoft jenny")
-      ) ||
-      voices.find((voice) =>
-        voice.name.toLowerCase().includes("google us english")
-      ) ||
-      voices.find((voice) =>
-        voice.name.toLowerCase().includes("google uk english")
-      ) ||
-      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ||
-      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb")) ||
-      voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ||
-      voices[0];
-
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-
-    utterance.onstart = () => {
-      setSpeaking(true);
-    };
-
-    utterance.onend = () => {
-      setSpeaking(false);
-    };
-
-    utterance.onerror = () => {
-      setSpeaking(false);
-    };
-
-    setTimeout(() => {
-      window.speechSynthesis.speak(utterance);
-    }, 120);
+  if (!("speechSynthesis" in window)) {
+    setMessages((old) => [
+      ...old,
+      {
+        role: "ai",
+        text: "Speech output is not supported in this browser.",
+      },
+    ]);
+    return;
   }
+
+  window.speechSynthesis.cancel();
+
+  const cleanedText = cleanTextForSpeech(text);
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+
+  // Jarvis-style: smooth British/English assistant voice
+  utterance.lang = "en-GB";
+  utterance.rate = 0.9;
+  utterance.pitch = 0.88;
+  utterance.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+
+  const preferredVoice =
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("microsoft george")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("microsoft ryan")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("google uk english male")
+    ) ||
+    voices.find(
+      (voice) =>
+        voice.lang.toLowerCase().startsWith("en-gb") &&
+        voice.name.toLowerCase().includes("male")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("daniel")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("arthur")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("guy")
+    ) ||
+    voices.find((voice) =>
+      voice.name.toLowerCase().includes("david")
+    ) ||
+    voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith("en-gb")
+    ) ||
+    voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith("en-us")
+    ) ||
+    voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith("en")
+    ) ||
+    voices[0];
+
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  }
+
+  utterance.onstart = () => {
+    setSpeaking(true);
+  };
+
+  utterance.onend = () => {
+    setSpeaking(false);
+  };
+
+  utterance.onerror = () => {
+    setSpeaking(false);
+  };
+
+  setTimeout(() => {
+    window.speechSynthesis.speak(utterance);
+  }, 120);
+}
 
   function stopSpeaking() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
