@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Globe2,
   Layers3,
+  Lightbulb,
   Loader2,
   Mail,
   Mic,
@@ -200,9 +201,9 @@ const featureCards = [
     text: "Users can speak commands directly through the mic button.",
   },
   {
-    icon: MonitorSmartphone,
-    title: "Cross Platform",
-    text: "Works on laptop, mobile, tablet, and can be installed as a PWA.",
+    icon: Lightbulb,
+    title: "Project Analyzer",
+    text: "Users can paste a project idea and get an AI-powered portfolio analysis.",
   },
 ];
 
@@ -228,7 +229,7 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, session memory, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, session memory, project analyzer, and responsive web design.",
   },
   {
     title: "Jarvis Desktop Assistant",
@@ -261,6 +262,10 @@ export default function Home() {
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [speechEnabled, setSpeechEnabled] = useState(true);
+  const [projectIdea, setProjectIdea] = useState("");
+  const [projectAnalysis, setProjectAnalysis] = useState("");
+  const [analyzerLoading, setAnalyzerLoading] = useState(false);
+
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -274,9 +279,9 @@ export default function Home() {
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
       { label: "Memory", value: messages.length > 1 ? "Active" : "Ready" },
-      { label: "Mode", value: "Live AI" },
+      { label: "Analyzer", value: analyzerLoading ? "Scanning" : "Ready" },
     ],
-    [speaking, listening, messages.length]
+    [speaking, listening, messages.length, analyzerLoading]
   );
 
   useEffect(() => {
@@ -548,6 +553,63 @@ export default function Home() {
     }
   }
 
+  async function analyzeProject() {
+    if (!projectIdea.trim() || analyzerLoading) return;
+
+    const idea = projectIdea.trim();
+    setAnalyzerLoading(true);
+    setProjectAnalysis("");
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: `
+Analyze this portfolio app idea professionally:
+
+Project idea:
+${idea}
+
+Return the answer in this exact format:
+
+Difficulty:
+Best Tech Stack:
+Core Features:
+Portfolio Value:
+AI Features:
+UI/UX Ideas:
+Deployment Plan:
+Upgrade Suggestions:
+
+Keep it clear, practical, and impressive for a developer portfolio.
+          `,
+          history: [],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Project analysis failed.");
+      }
+
+      const result = data.reply || "No analysis generated.";
+      setProjectAnalysis(result);
+      speakText("Project analysis completed.");
+    } catch (error) {
+      const errorText =
+        error instanceof Error
+          ? `Error: ${error.message}`
+          : "Error: Something went wrong.";
+      setProjectAnalysis(errorText);
+    } finally {
+      setAnalyzerLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#020617] text-white">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.16),transparent_35%)]" />
@@ -594,7 +656,7 @@ export default function Home() {
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  Session Memory Added
+                  AI Project Analyzer
                 </span>
               </div>
 
@@ -607,8 +669,9 @@ export default function Home() {
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, voice output, session memory, 3D visuals, and
-                modern web development skills in one live portfolio project.
+                voice input, voice output, session memory, project analysis, 3D
+                visuals, and modern web development skills in one live portfolio
+                project.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -674,7 +737,7 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.15 }}
             className="space-y-6"
           >
-            <AIGlobe active={speaking || loading || listening} />
+            <AIGlobe active={speaking || loading || listening || analyzerLoading} />
 
             <div className="rounded-[2rem] border border-cyan-400/20 bg-black/40 p-5 backdrop-blur-xl">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -789,6 +852,72 @@ export default function Home() {
           </motion.div>
         </div>
 
+        <section className="mt-8 rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-6 backdrop-blur-xl">
+          <div className="mb-5 flex items-center gap-3">
+            <Lightbulb className="text-cyan-300" />
+            <div>
+              <h3 className="text-2xl font-bold">AI Project Analyzer</h3>
+              <p className="mt-1 text-sm text-slate-400">
+                Paste any app idea and Jarvis will turn it into a professional
+                portfolio plan.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="space-y-4">
+              <textarea
+                value={projectIdea}
+                onChange={(event) => setProjectIdea(event.target.value)}
+                placeholder="Example: I want to build an AI school management app with student records, result generation, parent messages, and dashboard charts."
+                className="min-h-48 w-full resize-none rounded-3xl border border-cyan-300/15 bg-black/35 p-4 text-sm leading-7 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/50"
+              />
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={analyzeProject}
+                  disabled={analyzerLoading}
+                  className="rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-400/25 transition hover:scale-[1.02] disabled:opacity-50"
+                >
+                  {analyzerLoading ? (
+                    <Loader2 className="mr-2 inline h-5 w-5 animate-spin" />
+                  ) : (
+                    <Zap className="mr-2 inline h-5 w-5" />
+                  )}
+                  Analyze Project
+                </button>
+
+                <button
+                  onClick={() => {
+                    setProjectIdea("");
+                    setProjectAnalysis("");
+                  }}
+                  className="rounded-2xl border border-cyan-300/25 bg-white/5 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-white/10"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <div className="min-h-48 rounded-3xl border border-cyan-400/15 bg-black/35 p-5">
+              {analyzerLoading ? (
+                <div className="flex items-center gap-3 text-cyan-100">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Jarvis is analyzing your project idea...
+                </div>
+              ) : projectAnalysis ? (
+                <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-200">
+                  {projectAnalysis}
+                </pre>
+              ) : (
+                <div className="flex h-full min-h-40 items-center justify-center rounded-2xl border border-dashed border-cyan-300/15 p-5 text-center text-sm leading-7 text-slate-500">
+                  Your AI project analysis will appear here.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
         <section className="mt-8 grid gap-6 lg:grid-cols-3">
           <div className="rounded-[2rem] border border-cyan-400/20 bg-white/[0.04] p-6 backdrop-blur-xl lg:col-span-1">
             <div className="mb-4 flex items-center gap-3">
@@ -864,7 +993,8 @@ export default function Home() {
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
                 This app is live, AI-connected, voice-enabled, memory-upgraded,
-                and deployed as a portfolio-ready project.
+                project-analysis powered, and deployed as a portfolio-ready
+                project.
               </p>
             </div>
 
