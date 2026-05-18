@@ -20,6 +20,7 @@ import {
   Rocket,
   Save,
   Send,
+  ShieldCheck,
   Sparkles,
   Terminal,
   UserRound,
@@ -252,14 +253,14 @@ const projects = [
     text: "A separate AI-powered resume reviewer that scores resumes, suggests ATS keywords, improves profile summaries, and gives job application advice.",
   },
   {
+    title: "Admin Dashboard",
+    tech: "Next.js, AI Report Generator, Portfolio Controls",
+    text: "A private-style admin area with project status cards, build checklist, quick links, and AI-generated project report.",
+  },
+  {
     title: "Jarvis Desktop Assistant",
     tech: "Python, AI API, Voice Features",
     text: "A local desktop AI assistant concept inspired by Jarvis, built with voice interaction and a futuristic interface.",
-  },
-  {
-    title: "School Result Management App",
-    tech: "AppSheet, Database, Automation",
-    text: "A school management solution for student records, result calculations, grades, and admin workflows.",
   },
 ];
 
@@ -287,9 +288,9 @@ export default function Home() {
         value: speaking ? "Speaking" : listening ? "Listening" : "Ready",
       },
       { label: "Saved", value: messages.length > 1 ? "Active" : "Ready" },
-      { label: "Analyzer", value: analyzerLoading ? "Scanning" : "Ready" },
+      { label: "Admin", value: "Added" },
     ],
-    [speaking, listening, messages.length, analyzerLoading]
+    [speaking, listening, messages.length]
   );
 
   useEffect(() => {
@@ -457,12 +458,14 @@ export default function Home() {
   function clearChat() {
     stopSpeaking();
     setInput("");
-    const clearMessage = [
+
+    const clearMessage: Message[] = [
       {
-        role: "ai" as const,
+        role: "ai",
         text: "Chat cleared. Jarvis is ready for a new command.",
       },
     ];
+
     setMessages(clearMessage);
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(clearMessage));
   }
@@ -711,7 +714,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  Saved Chat History
+                  Admin Dashboard Added
                 </span>
               </div>
 
@@ -724,9 +727,8 @@ Keep it clear, practical, and impressive for a developer portfolio.
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, voice output, saved history, project analysis, 3D
-                visuals, and modern web development skills in one live portfolio
-                project.
+                voice input, voice output, saved history, project analysis, admin
+                controls, 3D visuals, and modern web development skills.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -746,6 +748,14 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 >
                   <FileText className="mr-2 inline h-5 w-5" />
                   Resume Reviewer
+                </Link>
+
+                <Link
+                  href="/admin"
+                  className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-5 py-3 font-semibold text-emerald-100 transition hover:bg-emerald-300/20"
+                >
+                  <ShieldCheck className="mr-2 inline h-5 w-5" />
+                  Admin Dashboard
                 </Link>
 
                 <a
@@ -1052,7 +1062,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
               <h3 className="text-2xl font-bold">Want to contact Shazee?</h3>
               <p className="mt-2 text-sm leading-7 text-slate-300">
                 This app is live, AI-connected, voice-enabled, saved-history
-                upgraded, project-analysis powered, and deployed as a
+                upgraded, admin-dashboard powered, and deployed as a
                 portfolio-ready project.
               </p>
             </div>
@@ -1075,6 +1085,14 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 <ExternalLink className="mr-2 inline h-5 w-5" />
                 GitHub
               </a>
+
+              <Link
+                href="/admin"
+                className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-5 py-3 font-semibold text-emerald-100 transition hover:bg-emerald-300/20"
+              >
+                <ShieldCheck className="mr-2 inline h-5 w-5" />
+                Admin
+              </Link>
             </div>
           </div>
         </section>
