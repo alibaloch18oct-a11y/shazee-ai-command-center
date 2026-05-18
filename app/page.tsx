@@ -207,8 +207,8 @@ const featureCards = [
   },
   {
     icon: Volume2,
-    title: "Voice Output",
-    text: "Jarvis can speak AI replies aloud using browser speech synthesis.",
+    title: "Jarvis Voice",
+    text: "Smoother deeper voice output using the best available browser voice.",
   },
   {
     icon: Save,
@@ -245,7 +245,7 @@ const projects = [
   {
     title: "Shazee AI Command Center",
     tech: "Next.js, Groq API, Tailwind, Three.js",
-    text: "A futuristic AI portfolio assistant with real AI chat, voice input, voice output, animated 3D globe, saved chat history, project analyzer, and responsive web design.",
+    text: "A futuristic AI portfolio assistant with real AI chat, voice input, smoother voice output, animated 3D globe, saved chat history, project analyzer, and responsive web design.",
   },
   {
     title: "AI Resume Reviewer",
@@ -382,6 +382,22 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      window.speechSynthesis.getVoices();
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, listening]);
 
@@ -393,6 +409,8 @@ export default function Home() {
       .replace(/\*/g, "")
       .replace(/#/g, "")
       .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+      .replace(/\n+/g, ". ")
+      .replace(/\s+/g, " ")
       .trim();
   }
 
@@ -413,18 +431,35 @@ export default function Home() {
 
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(cleanTextForSpeech(text));
+    const cleanedText = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
 
     utterance.lang = "en-US";
-    utterance.rate = 0.95;
-    utterance.pitch = 0.85;
+
+    // Smoother Jarvis-style voice settings
+    utterance.rate = 0.88;
+    utterance.pitch = 0.72;
     utterance.volume = 1;
 
     const voices = window.speechSynthesis.getVoices();
+
     const preferredVoice =
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("microsoft david")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("microsoft mark")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("google uk english male")
+      ) ||
+      voices.find((voice) =>
+        voice.name.toLowerCase().includes("english male")
+      ) ||
       voices.find((voice) => voice.name.toLowerCase().includes("david")) ||
       voices.find((voice) => voice.name.toLowerCase().includes("mark")) ||
-      voices.find((voice) => voice.name.toLowerCase().includes("male")) ||
+      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-gb")) ||
+      voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ||
       voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ||
       voices[0];
 
@@ -444,7 +479,9 @@ export default function Home() {
       setSpeaking(false);
     };
 
-    window.speechSynthesis.speak(utterance);
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 150);
   }
 
   function stopSpeaking() {
@@ -496,9 +533,13 @@ export default function Home() {
       ...old,
       {
         role: "ai",
-        text: "Voice output enabled.",
+        text: "Voice output enabled. Jarvis voice mode is now active.",
       },
     ]);
+
+    setTimeout(() => {
+      speakText("Voice output enabled. Jarvis voice mode is now active.");
+    }, 100);
   }
 
   function toggleListening() {
@@ -714,7 +755,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
                 </span>
 
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-100">
-                  Admin Dashboard Added
+                  Smoother Jarvis Voice
                 </span>
               </div>
 
@@ -727,8 +768,9 @@ Keep it clear, practical, and impressive for a developer portfolio.
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
                 A professional AI command center designed to showcase AI chat,
-                voice input, voice output, saved history, project analysis, admin
-                controls, 3D visuals, and modern web development skills.
+                voice input, smoother Jarvis-style voice output, saved history,
+                project analysis, admin controls, 3D visuals, and modern web
+                development skills.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -918,7 +960,7 @@ Keep it clear, practical, and impressive for a developer portfolio.
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Saved in this browser. Refresh the page to test saved chat.
+                For best Jarvis-like voice, test in Microsoft Edge on Windows.
               </p>
             </div>
           </motion.div>
